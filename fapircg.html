@@ -1,0 +1,57 @@
+<script src="face-api.js"></script>
+
+<img id="img" src="john.jpg">
+<h3 id="desc"></h3>
+<canvas id="canvas" height="1500px" width="1500px" style=" position:absolute; top: 8px; left:8px;"> </canvas>
+
+<script>
+        const img = document.getElementById('img');
+	const desc = document.getElementById('desc');
+	const canvas = document.getElementById('canvas');
+	const MODEL_URL = '/models';
+
+	var registedFaces;
+
+	async function model_load(){
+        	await faceapi.loadSsdMobilenetv1Model(MODEL_URL);
+		await faceapi.loadFaceLandmarkModel(MODEL_URL);
+		await faceapi.loadFaceRecognitionModel(MODEL_URL);
+
+		const labels = ['john','tod'];
+
+		registedFaces = await Promise.all(
+	 	    labels.map(async label => {
+			const imgUrl = `${label}.jpg`;
+			const img = await faceapi.fetchImage(imgUrl);
+		
+			const fullFaceDescription = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+		
+			if (!fullFaceDescription) {
+		  	   throw new Error(`no faces detected for ${label}`);
+			}
+		
+			const faceDescriptors = [fullFaceDescription.descriptor];
+			return new faceapi.LabeledFaceDescriptors(label, faceDescriptors);
+		    })
+		);
+	}
+
+	async function detect(){
+		let data = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+		return data;
+	}
+
+	model_load().then(function(){ 
+		detect().then(data => {
+			const faceMatcher = new faceapi.FaceMatcher(registedFaces, 0.5);
+			const result = faceMatcher.findBestMatch(data.descriptor);
+
+			console.log(data);
+			console.log(result);
+
+			drawOp = {label : result.label};
+			dbox = new faceapi.draw.DrawBox(data.detection.box, drawOp);
+			dbox.draw(canvas);
+		});
+	});
+</script>

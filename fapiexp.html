@@ -1,0 +1,24 @@
+<script src="face-api.js"></script>
+
+<img id="img" src="john.jpg">
+<canvas id="canvas" height="1500px" width="1500px" style=" position:absolute; top: 8px; left:8px;"> </canvas>
+
+<script>
+        const img = document.getElementById('img');
+	const canvas = document.getElementById('canvas');
+	const MODEL_URL = '/models';
+
+	async function model_load(){
+        	await faceapi.loadSsdMobilenetv1Model(MODEL_URL);
+		await faceapi.loadFaceExpressionModel(MODEL_URL);
+	}
+
+	async function detect(){
+		let data = await faceapi.detectSingleFace(img).withFaceExpressions();
+		return data;
+	}
+
+	model_load().then(function(){ 
+		detect().then(data => {faceapi.draw.drawFaceExpressions(canvas, data);});
+	});
+</script>

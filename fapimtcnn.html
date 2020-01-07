@@ -1,0 +1,32 @@
+<script src="face-api.js"></script>
+
+<img id="img" src="john.jpg">
+<h3 id="desc"></h3>
+<canvas id="canvas" height="1500px" width="1500px" style=" position:absolute; top: 8px; left:8px;"> </canvas>
+
+<script>
+        const img = document.getElementById('img');
+	const desc = document.getElementById('desc');
+	const canvas = document.getElementById('canvas').getContext("2d");
+	const MODEL_URL = '/models';
+
+	async function mtcnn_model_load(){
+        	await faceapi.loadMtcnnModel(MODEL_URL);
+	}
+
+	async function detect(){
+		let data = await faceapi.detectSingleFace(img, new faceapi.MtcnnOptions());
+		return data;
+	}
+
+        function drawBox(ctx, data, color){
+                ctx.strokeStyle=color;
+                ctx.lineWidth=5;
+                ctx.strokeRect(data.box.x, data.box.y, data.box.width, data.box.height);
+        }
+
+	mtcnn_model_load().then(function(){ 
+		detect().then(data => {desc.innerText='Mtcnn Score : '+data.score; 
+				drawBox(canvas, data, '#0000ff');});
+	});
+</script>
